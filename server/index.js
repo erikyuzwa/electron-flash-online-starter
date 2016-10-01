@@ -1,6 +1,7 @@
 
 /**
- * a barebones Flash socket server
+ * a barebones Flash socket server for Flash clients, we need to 
+ * respond to the cross-domain policy file request.
  */
 var net = require('net');
 var hostPort = 8000;
@@ -9,11 +10,11 @@ var server = net.createServer(function (socket) {
      
      socket.setEncoding('utf8');
  
-     //Send the Cross Domain Policy
+     // send the Cross Domain Policy
      socket.write(writeCrossDomainFile() + '\0');
 
-     //Due to old Flash Players, this listens for Flash to request
-     //the Cross Domain Policy and then responds
+     // the initial connection by the Flash client will request 
+     // the cross-domain policy file
      function on_policy_check(data) {
           socket.removeListener('data', on_policy_check);
           socket.on('data', on_data);
@@ -21,9 +22,9 @@ var server = net.createServer(function (socket) {
           try {
                if (data === '<policy-file-request/>\0') {
                   console.log('client requesting cross domain policy file');
-                  socket.write(writeCrossDomainFile());
+                  socket.write(streamCrossDomainFile());
                } else {
-                  console.log('echo: ' + data);
+                  console.log('[DEBUG] ' + data);
                   socket.write('Echo: ' + data);
                }
           }
@@ -55,7 +56,7 @@ var server = net.createServer(function (socket) {
 server.listen(hostPort);
 console.log('[DEBUG] server listening on *:' + hostPort);
  
-function writeCrossDomainFile() {
+function streamCrossDomainFile() {
      
      var xml = '<?xml version="1.0"?>\n<!DOCTYPE cross-domain-policy SYSTEM'
      xml += ' "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">';
